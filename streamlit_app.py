@@ -1,44 +1,38 @@
-streamlit```
-
----
-
-### **[streamlit_app.py 전체 코드]**
-
-아래 코드를 전부 복사해서 `streamlit_app.py` 라는 이름의 파이썬 파일로 저장하세요.
-
-```python
 # streamlit_app.py
 
 import streamlit as st
 
 # --- 앱의 기본 설정 ---
+# 이 부분은 항상 코드 최상단에 위치해야 합니다.
 st.set_page_config(
     page_title="MBTI 학습 유형 진단 (5점 척도)",
     page_icon="🧠",
 )
 
 # --- 세션 상태 초기화 ---
-# 'submitted' 키가 세션 상태에 없으면 False로 초기화합니다.
+# st.session_state는 사용자의 답변이나 앱의 상태를 저장하는 메모리 공간입니다.
+# 'submitted' 키가 없으면 False로 만들어, 아직 제출 전임을 표시합니다.
 if 'submitted' not in st.session_state:
     st.session_state.submitted = False
+    st.session_state.answers = {}
 
 def calculate_mbti(answers):
     """
     사용자의 5점 척도 답변을 바탕으로 MBTI 유형을 계산하는 함수.
-    (1점: 매우 아니다, 3점: 보통, 5점: 매우 그렇다)
-    각 점수를 E, N, F, J 성향에 대한 점수로 변환하여 합산합니다.
+    (1점: 왼쪽 성향, 3점: 중간, 5점: 오른쪽 성향)
+    각 점수를 -2 ~ +2점으로 변환하여 합산합니다.
     """
     # 점수 변환 맵: 1점 -> -2점, 2점 -> -1점, 3점 -> 0점, 4점 -> 1점, 5점 -> 2점
     score_map = {1: -2, 2: -1, 3: 0, 4: 1, 5: 2}
 
     # 각 차원별 점수를 계산합니다.
-    # 점수가 양수(+)면 E, N, F, J 성향, 음수(-)면 I, S, T, P 성향입니다.
-    ei_score = score_map[answers['q1']] + score_map[answers['q5']]
-    sn_score = score_map[answers['q2']] + score_map[answers['q6']]
-    tf_score = score_map[answers['q3']] + score_map[answers['q7']]
-    jp_score = score_map[answers['q4']] + score_map[answers['q8']]
+    # 양수(+)면 오른쪽 유형(E, N, F, J), 음수(-)면 왼쪽 유형(I, S, T, P)입니다.
+    ei_score = score_map[answers['q1']] + score_map[answers['q5']]  # E > 0 > I
+    sn_score = score_map[answers['q2']] + score_map[answers['q6']]  # N > 0 > S
+    tf_score = score_map[answers['q3']] + score_map[answers['q7']]  # F > 0 > T
+    jp_score = score_map[answers['q4']] + score_map[answers['q8']]  # J > 0 > P
     
-    # 각 차원별로 더 높은 점수를 받은 유형을 선택합니다.
+    # 각 차원별로 유형을 결정합니다.
     mbti = ""
     mbti += "E" if ei_score >= 0 else "I"
     mbti += "N" if sn_score >= 0 else "S"
@@ -49,8 +43,9 @@ def calculate_mbti(answers):
 
 def get_learning_style(mbti):
     """
-    계산된 MBTI 유형에 맞는 학습 스타일 설명을 반환하는 함수. (이전과 동일)
+    계산된 MBTI 유형에 맞는 학습 스타일 설명을 반환하는 함수.
     """
+    # 이 부분은 이전과 동일합니다.
     styles = {
         "ISTJ": "실용적이고 체계적인 학습을 선호합니다. 사실에 근거하여 꾸준히 학습하는 스타일입니다.",
         "ISFJ": "온정적이고 책임감이 강하며, 다른 사람에게 도움이 되는 내용을 학습할 때 동기부여를 받습니다.",
@@ -74,60 +69,49 @@ def get_learning_style(mbti):
 # --- 앱 UI 구성 ---
 st.title("🧠 MBTI 기반 학습 유형 진단")
 st.write("각 문항을 읽고, 자신과 얼마나 일치하는지 5점 척도로 선택해주세요.")
-st.caption("`(1: 전혀 그렇지 않다, 3: 보통이다, 5: 매우 그렇다)`")
+st.caption("`(1점: 왼쪽 설명에 가까움, 3점: 중간, 5점: 오른쪽 설명에 가까움)`")
 
-# st.form을 사용하여 여러 위젯을 그룹화하고, 제출 버튼을 누를 때만 앱이 다시 실행되도록 합니다.
+# st.form을 사용하여 여러 위젯을 그룹화하고, 제출 버튼을 누를 때만 상호작용합니다.
 with st.form("mbti_form"):
     
-    # st.slider(레이블, 최소값, 최대값, 기본값)
-    # 각 질문은 E, N, F, J 성향에 "그렇다"고 답하는 방향으로 구성되었습니다.
-    
-    st.subheader("에너지 방향 (E/I)")
-    q1 = st.slider("나는 여러 사람과 어울리며 에너지를 얻는다.", 1, 5, 3)
-    q5 = st.slider("나는 생각을 말로 표현하면서 정리하는 편이다.", 1, 5, 3)
+    # 각 슬라이더의 설명을 양쪽 극단으로 명확히 제시합니다.
+    st.subheader("에너지 방향")
+    q1 = st.slider("혼자 있을 때 (I) vs 함께 있을 때 (E) 에너지를 얻는다.", 1, 5, 3)
+    q5 = st.slider("충분히 생각 후 말한다 (I) vs 말하면서 생각을 정리한다 (E)", 1, 5, 3)
 
-    st.subheader("인식 기능 (S/N)")
-    q2 = st.slider("나는 나무보다 숲을 보는 경향이 있으며, 미래의 가능성을 중요하게 생각한다.", 1, 5, 3)
-    q6 = st.slider("나는 추상적이고 비유적인 설명을 더 쉽게 이해한다.", 1, 5, 3)
+    st.subheader("인식 기능")
+    q2 = st.slider("현실적이고 구체적인 정보 (S) vs 직관과 미래의 가능성 (N)을 본다.", 1, 5, 3)
+    q6 = st.slider("실제 경험을 중시한다 (S) vs 추상적인 아이디어를 중시한다 (N)", 1, 5, 3)
     
-    st.subheader("결정 방식 (T/F)")
-    q3 = st.slider("나는 결정을 내릴 때 객관적인 사실보다 사람들과의 관계를 더 고려한다.", 1, 5, 3)
-    q7 = st.slider("나는 '다른 사람에게 어떤 영향을 미칠까'를 더 중요하게 생각한다.", 1, 5, 3)
+    st.subheader("결정 방식")
+    q3 = st.slider("객관적 사실과 논리 (T) vs 사람과의 관계와 감정 (F)을 고려한다.", 1, 5, 3)
+    q7 = st.slider("옳고 그름이 중요하다 (T) vs 타인에게 미칠 영향이 중요하다 (F)", 1, 5, 3)
 
-    st.subheader("생활 양식 (J/P)")
-    q4 = st.slider("나는 계획을 세우고 체계적으로 생활하는 것을 선호한다.", 1, 5, 3)
-    q8 = st.slider("나는 마감 기한을 지키기 위해 미리 계획을 세운다.", 1, 5, 3)
+    st.subheader("생활 양식")
+    q4 = st.slider("상황에 따라 유연하게 대처 (P) vs 계획에 따라 체계적으로 진행 (J)", 1, 5, 3)
+    q8 = st.slider("마감이 임박해야 집중 (P) vs 미리 계획하여 마감 준수 (J)", 1, 5, 3)
     
-    # st.form_submit_button은 form 내에서 사용되어야 합니다.
+    # st.form_submit_button은 form 안에서 사용되어야 합니다.
     submitted = st.form_submit_button("결과 확인하기")
     if submitted:
-        # 제출 버튼이 눌리면, submitted 상태를 True로 변경합니다.
         st.session_state.submitted = True
-
-        # 각 슬라이더의 값을 세션 상태에 저장합니다.
         st.session_state.answers = {
-            'q1': q1, 'q2': q2, 'q3': q3, 'q4': q4,
-            'q5': q5, 'q6': q6, 'q7': q7, 'q8': q8,
+            'q1': q1, 'q5': q5, 'q2': q2, 'q6': q6,
+            'q3': q3, 'q7': q7, 'q4': q4, 'q8': q8,
         }
 
-# 제출 버튼이 눌린 후에만 결과 섹션을 표시합니다.
+# 제출 버튼이 눌렸다면, 이 아래의 코드가 실행됩니다.
 if st.session_state.submitted:
-    # 세션 상태에서 답변을 가져옵니다.
-    user_answers = st.session_state.answers
-    
-    # MBTI 유형 계산 및 학습 스타일 설명 가져오기
-    user_mbti = calculate_mbti(user_answers)
+    user_mbti = calculate_mbti(st.session_state.answers)
     learning_style = get_learning_style(user_mbti)
     
-    st.markdown("---") # 구분선 추가
+    st.markdown("---")
     st.subheader("🎉 진단 결과")
-    
     st.success(f"당신의 MBTI 학습 유형은 **{user_mbti}** 입니다!")
     st.write(learning_style)
 
-    # 다시 검사하고 싶을 경우를 대비한 버튼
     if st.button("다시 검사하기"):
-        # 세션 상태를 초기화합니다.
+        # 세션 상태를 초기화하여 처음부터 다시 시작할 수 있도록 합니다.
         st.session_state.submitted = False
-        del st.session_state.answers
-        st.experimental_rerun() # 앱을 새로고침하여 초기 상태로 돌아갑니다.
+        st.session_state.answers = {}
+        st.rerun() # 최신 Streamlit 앱 새로고침 함수
