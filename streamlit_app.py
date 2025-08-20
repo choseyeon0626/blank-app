@@ -27,10 +27,11 @@ def calculate_mbti(answers):
 
     # 각 차원별 점수를 계산합니다.
     # 양수(+)면 오른쪽 유형(E, N, F, J), 음수(-)면 왼쪽 유형(I, S, T, P)입니다.
-    ei_score = score_map[answers['q1']] + score_map[answers['q5']]  # E > 0 > I
-    sn_score = score_map[answers['q2']] + score_map[answers['q6']]  # N > 0 > S
-    tf_score = score_map[answers['q3']] + score_map[answers['q7']]  # F > 0 > T
-    jp_score = score_map[answers['q4']] + score_map[answers['q8']]  # J > 0 > P
+    # 슬라이더 질문이 (I/S/T/P) vs (E/N/F/J) 순서이므로, 점수 부호를 반대로 적용합니다.
+    ei_score = -(score_map[answers['q1']] + score_map[answers['q5']])
+    sn_score = -(score_map[answers['q2']] + score_map[answers['q6']])
+    tf_score = -(score_map[answers['q3']] + score_map[answers['q7']])
+    jp_score = -(score_map[answers['q4']] + score_map[answers['q8']])
     
     # 각 차원별로 유형을 결정합니다.
     mbti = ""
@@ -45,7 +46,6 @@ def get_learning_style(mbti):
     """
     계산된 MBTI 유형에 맞는 학습 스타일 설명을 반환하는 함수.
     """
-    # 이 부분은 이전과 동일합니다.
     styles = {
         "ISTJ": "실용적이고 체계적인 학습을 선호합니다. 사실에 근거하여 꾸준히 학습하는 스타일입니다.",
         "ISFJ": "온정적이고 책임감이 강하며, 다른 사람에게 도움이 되는 내용을 학습할 때 동기부여를 받습니다.",
@@ -76,20 +76,20 @@ with st.form("mbti_form"):
     
     # 각 슬라이더의 설명을 양쪽 극단으로 명확히 제시합니다.
     st.subheader("에너지 방향")
-    q1 = st.slider("혼자 있을 때 (I) vs 함께 있을 때 (E) 에너지를 얻는다.", 1, 5, 3)
-    q5 = st.slider("충분히 생각 후 말한다 (I) vs 말하면서 생각을 정리한다 (E)", 1, 5, 3)
+    q1 = st.slider("혼자 있을 때 (I) vs 함께 있을 때 (E) 에너지를 얻는다.", 1, 5, 3, key='q1')
+    q5 = st.slider("충분히 생각 후 말한다 (I) vs 말하면서 생각을 정리한다 (E)", 1, 5, 3, key='q5')
 
     st.subheader("인식 기능")
-    q2 = st.slider("현실적이고 구체적인 정보 (S) vs 직관과 미래의 가능성 (N)을 본다.", 1, 5, 3)
-    q6 = st.slider("실제 경험을 중시한다 (S) vs 추상적인 아이디어를 중시한다 (N)", 1, 5, 3)
+    q2 = st.slider("현실적이고 구체적인 정보 (S) vs 직관과 미래의 가능성 (N)을 본다.", 1, 5, 3, key='q2')
+    q6 = st.slider("실제 경험을 중시한다 (S) vs 추상적인 아이디어를 중시한다 (N)", 1, 5, 3, key='q6')
     
     st.subheader("결정 방식")
-    q3 = st.slider("객관적 사실과 논리 (T) vs 사람과의 관계와 감정 (F)을 고려한다.", 1, 5, 3)
-    q7 = st.slider("옳고 그름이 중요하다 (T) vs 타인에게 미칠 영향이 중요하다 (F)", 1, 5, 3)
+    q3 = st.slider("객관적 사실과 논리 (T) vs 사람과의 관계와 감정 (F)을 고려한다.", 1, 5, 3, key='q3')
+    q7 = st.slider("옳고 그름이 중요하다 (T) vs 타인에게 미칠 영향이 중요하다 (F)", 1, 5, 3, key='q7')
 
     st.subheader("생활 양식")
-    q4 = st.slider("상황에 따라 유연하게 대처 (P) vs 계획에 따라 체계적으로 진행 (J)", 1, 5, 3)
-    q8 = st.slider("마감이 임박해야 집중 (P) vs 미리 계획하여 마감 준수 (J)", 1, 5, 3)
+    q4 = st.slider("상황에 따라 유연하게 대처 (P) vs 계획에 따라 체계적으로 진행 (J)", 1, 5, 3, key='q4')
+    q8 = st.slider("마감이 임박해야 집중 (P) vs 미리 계획하여 마감 준수 (J)", 1, 5, 3, key='q8')
     
     # st.form_submit_button은 form 안에서 사용되어야 합니다.
     submitted = st.form_submit_button("결과 확인하기")
@@ -114,4 +114,5 @@ if st.session_state.submitted:
         # 세션 상태를 초기화하여 처음부터 다시 시작할 수 있도록 합니다.
         st.session_state.submitted = False
         st.session_state.answers = {}
-        st.rerun() # 최신 Streamlit 앱 새로고침 함수
+        st.rerun() # 최신 Streamlit 앱 새로고침 함수```
+
